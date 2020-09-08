@@ -1,0 +1,14 @@
+{
+  "id": "{{.Keycloak.Realm}}",
+  "realm": "{{.Keycloak.Realm}}",
+  "smtpServer": {
+    "host": "smtp.gmail.com",
+    "from": "from@gmail.com",
+    "starttls": "",
+    "auth": "",
+    "ssl": ""
+  },
+  "eventsEnabled": true,
+  "keycloakVersion": "11.0.2",
+  "userManagedAccessAllowed": false
+}
