@@ -31,7 +31,7 @@ func CreateSecret(username, password string, realm []byte) (err error) {
 
 	result, err := deploySecret.Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
-		log.Panic(err.Error())
+		// log.Panic(err.Error())
 		return err
 	}
 	log.Printf("secret created:  %q\n", result.GetObjectMeta().GetName())
@@ -47,7 +47,7 @@ func DeleteSecret() (err error) {
 	if err := deploySecret.Delete(context.TODO(), "keycloak-setup", metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
-		log.Panic(err.Error())
+		// log.Panic(err.Error())
 		return err
 	}
 	log.Println("secret deleted")

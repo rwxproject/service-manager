@@ -14,6 +14,8 @@ import (
 // DeployPlayload ...
 type DeployPlayload struct {
 	Namespace string `json:"namespace"`
+	HTTPPort  string `json:"httpPort"`
+	HTTPSPort string `json:"httpsPort"`
 	Keycloak  struct {
 		Realm string `json:"realm"`
 		User  struct {
@@ -90,8 +92,9 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// install helm chart
-	chartPath := "/Users/fabiano/rwxproject/kube-manager/chart/keycloak-9.0.8.tgz"
-	erri := Install("keycloak", deployPlayload.Namespace, chartPath)
+
+	chartPath := "/Users/fabiano/rwxproject/20200911/service-manager/keycloak-9.0.8.tgz"
+	erri := Install("keycloak", deployPlayload.Namespace, chartPath, deployPlayload)
 	if erri != nil {
 		DeleteSecret()
 		w.WriteHeader(http.StatusBadRequest)
