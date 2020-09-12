@@ -13,6 +13,7 @@ import (
 
 // DeployPlayload ...
 type DeployPlayload struct {
+	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 	HTTPPort  string `json:"httpPort"`
 	HTTPSPort string `json:"httpsPort"`
@@ -80,30 +81,38 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// delete old secret if exists
-	DeleteSecret()
-	time.Sleep(2 * time.Second)
+	DeleteSecret("keycloak-setup", deployPlayload.Namespace)
+	time.Sleep(1 * time.Second)
 
 	// create secret
-	errs := CreateSecret(deployPlayload.Keycloak.User.Username, deployPlayload.Keycloak.User.Password, realm)
+	errs := CreateKeycloakSecret("keycloak-setup", deployPlayload.Namespace, deployPlayload.Keycloak.User.Username, deployPlayload.Keycloak.User.Password, realm)
 	if errs != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(errs.Error()))
 		return
 	}
 
-	// install helm chart
-
+	// release install
 	chartPath := "/Users/fabiano/rwxproject/20200911/service-manager/keycloak-9.0.8.tgz"
-	erri := Install("keycloak", deployPlayload.Namespace, chartPath, deployPlayload)
+	erri := ReleaseInstall(deployPlayload.Name, deployPlayload.Namespace, chartPath, deployPlayload)
 	if erri != nil {
-		DeleteSecret()
+		DeleteSecret("keycloak-setup", deployPlayload.Namespace)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(erri.Error()))
 		return
 	}
+	// delete created secret
+	time.Sleep(1 * time.Second)
+	DeleteSecret("keycloak-setup", deployPlayload.Namespace)
+	// time.Sleep(10 * time.Second)
+	// err = ReleaseUninstall(deployPlayload.Name, deployPlayload.Namespace)
+	// if err != nil {
+
+	// 	return
+	// }
 
 	// service status
-	res, err := ServiceStatus("default")
+	res, err := ServiceStatus(deployPlayload.Namespace)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))

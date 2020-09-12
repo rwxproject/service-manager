@@ -13,7 +13,7 @@ import (
 type PodStatus struct {
 	Name   string `json:"name"`
 	Status string `json:"status"`
-	Ready  string `json:"ready"`
+	Ready  bool   `json:"ready"`
 }
 
 // StatusHandler ..
@@ -40,7 +40,7 @@ func PodsStatus(namespace string) (p []PodStatus, err error) {
 		st.Status = string(pod.Status.Phase)
 		for _, s := range pod.Status.Conditions {
 			if s.Type == "Ready" {
-				st.Ready = string(s.Status)
+				st.Ready = string(s.Status) == "True"
 			}
 		}
 		log.Printf("%v: %+v", pod.GetObjectMeta().GetName(), pod.Status.Phase)

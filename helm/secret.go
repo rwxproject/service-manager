@@ -8,10 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// CreateSecret ...
-func CreateSecret(username, password string, realm []byte) (err error) {
+// CreateKeycloakSecret ...
+func CreateKeycloakSecret(name, namespace, username, password string, realm []byte) (err error) {
 
-	deploySecret := Clientset.CoreV1().Secrets(apiv1.NamespaceDefault)
+	deploySecret := Clientset.CoreV1().Secrets(namespace)
 
 	secret := &apiv1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -19,7 +19,7 @@ func CreateSecret(username, password string, realm []byte) (err error) {
 			APIVersion: "apps/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "keycloak-setup",
+			Name: name,
 		},
 		Data: map[string][]byte{
 			"KEYCLOAK_USER":     []byte(username),
@@ -31,23 +31,21 @@ func CreateSecret(username, password string, realm []byte) (err error) {
 
 	result, err := deploySecret.Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
-		// log.Panic(err.Error())
 		return err
 	}
-	log.Printf("secret created:  %q\n", result.GetObjectMeta().GetName())
+	log.Printf("secret created: %q\n", result.GetObjectMeta().GetName())
 	return
 }
 
 // DeleteSecret ...
-func DeleteSecret() (err error) {
+func DeleteSecret(name, namespace string) (err error) {
 
-	deploySecret := Clientset.CoreV1().Secrets(apiv1.NamespaceDefault)
+	deploySecret := Clientset.CoreV1().Secrets(namespace)
 
 	deletePolicy := metav1.DeletePropagationForeground
-	if err := deploySecret.Delete(context.TODO(), "keycloak-setup", metav1.DeleteOptions{
+	if err := deploySecret.Delete(context.TODO(), name, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
-		// log.Panic(err.Error())
 		return err
 	}
 	log.Println("secret deleted")

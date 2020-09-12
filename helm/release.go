@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -38,20 +37,8 @@ type releaseOptions struct {
 	CleanupOnFail bool `json:"cleanup_on_fail"`
 }
 
-// type yamlConfig struct {
-// 	Service
-// }
-
-// var config = `# config.yaml
-// service:
-//   type: ClusterIP
-//   httpsPort: 8443
-// `
-
-// Install helm chart
-func Install(name, namespace, chartPath string, opt DeployPlayload) (err error) {
-
-	// var config = "{\"service\":{\"type\":\"LoadBalancer\",\"httpPort\":\"8086\",\"httpsPort\":\"8447\"}}"
+// ReleaseInstall helm chart
+func ReleaseInstall(name, namespace, chartPath string, opt DeployPlayload) (err error) {
 
 	chart, err := loader.Load(chartPath)
 	if err != nil {
@@ -62,16 +49,13 @@ func Install(name, namespace, chartPath string, opt DeployPlayload) (err error) 
 	client := action.NewInstall(ActionConfig)
 	client.Namespace = namespace
 	client.ReleaseName = name
-
+	// client.CreateNamespace = true
+	log.Printf("namespace: %v", client.Namespace)
 	var options releaseOptions
-	// httpPort := fmt.Sprintf("service.httpPort=%v", opt.HTTPPort)
-	// httpsPort := fmt.Sprintf("service.httpsPort=%v", opt.HTTPSPort)
-	// options.SetValues = []string{"service.httpPort=8081"}
+	options.SetStringValues = []string{}
 	options.SetValues = []string{}
 	options.SetValues = append(options.SetValues, fmt.Sprintf("service.httpPort=%v", opt.HTTPPort))
 	options.SetValues = append(options.SetValues, fmt.Sprintf("service.httpsPort=%v", opt.HTTPSPort))
-	options.SetStringValues = []string{}
-	// options.Values = config
 
 	vals, err := mergeValues(options)
 	if err != nil {
@@ -81,34 +65,43 @@ func Install(name, namespace, chartPath string, opt DeployPlayload) (err error) 
 
 	rel, err := client.Run(chart, vals)
 	if err != nil {
-		fmt.Println("_+_+_+_+_+")
-		log.Panic(err)
+		// log.Panic(err)
 		return err
 	}
 	log.Println("release installed: ", rel.Name)
 	return nil
 }
 
+// ReleaseUninstall helm chart
+func ReleaseUninstall(name, namespace string) (err error) {
+
+	client := action.NewUninstall(ActionConfig)
+
+	rel, err := client.Run(name)
+	if err != nil {
+		// log.Panic(err)
+		return err
+	}
+	log.Println("release uninstalled: ", rel.Release.Name)
+	return nil
+}
+
 func mergeValues(options releaseOptions) (map[string]interface{}, error) {
-	spew.Dump(options)
 	vals := map[string]interface{}{}
 
 	err := yaml.Unmarshal([]byte(options.Values), &vals)
 	if err != nil {
 		return vals, fmt.Errorf("failed parsing values")
 	}
-	spew.Dump(vals)
 	for _, value := range options.SetValues {
 		if err := strvals.ParseInto(value, vals); err != nil {
 			return vals, fmt.Errorf("failed parsing set data")
 		}
 	}
-
 	for _, value := range options.SetStringValues {
 		if err := strvals.ParseIntoString(value, vals); err != nil {
 			return vals, fmt.Errorf("failed parsing set_string data")
 		}
 	}
-
 	return vals, nil
 }
