@@ -38,7 +38,7 @@ type releaseOptions struct {
 }
 
 // ReleaseInstall helm chart
-func ReleaseInstall(name, namespace, chartPath string, opt DeployPlayload) (err error) {
+func ReleaseInstall(name, namespace, chartPath string, setValues []string) (err error) {
 
 	chart, err := loader.Load(chartPath)
 	if err != nil {
@@ -50,12 +50,9 @@ func ReleaseInstall(name, namespace, chartPath string, opt DeployPlayload) (err 
 	client.Namespace = namespace
 	client.ReleaseName = name
 	// client.CreateNamespace = true
-	log.Printf("namespace: %v", client.Namespace)
 	var options releaseOptions
 	options.SetStringValues = []string{}
-	options.SetValues = []string{}
-	options.SetValues = append(options.SetValues, fmt.Sprintf("service.httpPort=%v", opt.HTTPPort))
-	options.SetValues = append(options.SetValues, fmt.Sprintf("service.httpsPort=%v", opt.HTTPSPort))
+	options.SetValues = setValues
 
 	vals, err := mergeValues(options)
 	if err != nil {
@@ -65,7 +62,6 @@ func ReleaseInstall(name, namespace, chartPath string, opt DeployPlayload) (err 
 
 	rel, err := client.Run(chart, vals)
 	if err != nil {
-		// log.Panic(err)
 		return err
 	}
 	log.Println("release installed: ", rel.Name)
@@ -79,7 +75,6 @@ func ReleaseUninstall(name, namespace string) (err error) {
 
 	rel, err := client.Run(name)
 	if err != nil {
-		// log.Panic(err)
 		return err
 	}
 	log.Println("release uninstalled: ", rel.Release.Name)

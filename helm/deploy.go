@@ -15,6 +15,7 @@ import (
 type DeployPlayload struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Chart     string `json:"chart"`
 	HTTPPort  string `json:"httpPort"`
 	HTTPSPort string `json:"httpsPort"`
 	Keycloak  struct {
@@ -93,8 +94,15 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// release install
-	chartPath := "/Users/fabiano/rwxproject/20200911/service-manager/keycloak-9.0.8.tgz"
-	erri := ReleaseInstall(deployPlayload.Name, deployPlayload.Namespace, chartPath, deployPlayload)
+	// chartPath := "/../chart/keycloak-9.0.8.tgz"
+	chartPath := fmt.Sprintf("%s/%s.tgz", os.Getenv("CHART_PATH"), deployPlayload.Chart)
+	fmt.Println(chartPath)
+
+	var SetValues = []string{}
+	SetValues = append(SetValues, fmt.Sprintf("service.httpPort=%v", deployPlayload.HTTPPort))
+	SetValues = append(SetValues, fmt.Sprintf("service.httpsPort=%v", deployPlayload.HTTPSPort))
+
+	erri := ReleaseInstall(deployPlayload.Name, deployPlayload.Namespace, chartPath, SetValues)
 	if erri != nil {
 		DeleteSecret("keycloak-setup", deployPlayload.Namespace)
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,19 +112,39 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 	// delete created secret
 	time.Sleep(1 * time.Second)
 	DeleteSecret("keycloak-setup", deployPlayload.Namespace)
-	// time.Sleep(10 * time.Second)
-	// err = ReleaseUninstall(deployPlayload.Name, deployPlayload.Namespace)
-	// if err != nil {
 
-	// 	return
-	// }
+	// helm ls
+	res, err := ListStatus(deployPlayload.Namespace)
+	if err != nil {
+		log.Printf(err.Error())
+	}
+	json.NewEncoder(w).Encode(res)
 
-	// service status
-	res, err := ServiceStatus(deployPlayload.Namespace)
+}
+
+// DeployUninstallHandler ..
+func DeployUninstallHandler(w http.ResponseWriter, r *http.Request) {
+	var deployPlayload DeployPlayload
+
+	err := json.NewDecoder(r.Body).Decode(&deployPlayload)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
+		log.Panic(err.Error())
+	}
+
+	// release uninstall
+	erri := ReleaseUninstall(deployPlayload.Name, deployPlayload.Namespace)
+	if erri != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(erri.Error()))
 		return
+	}
+
+	// helm ls
+	res, err := ListStatus(deployPlayload.Namespace)
+	if err != nil {
+		log.Printf(err.Error())
 	}
 	json.NewEncoder(w).Encode(res)
 

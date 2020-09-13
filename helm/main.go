@@ -26,6 +26,7 @@ func main() {
 	log.Printf("version: %s", os.Getenv("VERSION"))
 	r := mux.NewRouter()
 	r.HandleFunc("/deploy", DeployHandler).Methods("POST")
+	r.HandleFunc("/deploy", DeployUninstallHandler).Methods("DELETE")
 	r.HandleFunc("/status", StatusHandler).Methods("GET")
 	r.HandleFunc("/list", ListHandler).Methods("GET")
 	log.Println("server running on port 8899")
