@@ -99,8 +99,8 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(chartPath)
 
 	var SetValues = []string{}
-	SetValues = append(SetValues, fmt.Sprintf("service.httpPort=%v", deployPlayload.HTTPPort))
-	SetValues = append(SetValues, fmt.Sprintf("service.httpsPort=%v", deployPlayload.HTTPSPort))
+	// SetValues = append(SetValues, fmt.Sprintf("service.httpPort=%v", deployPlayload.HTTPPort))
+	// SetValues = append(SetValues, fmt.Sprintf("service.httpsPort=%v", deployPlayload.HTTPSPort))
 
 	erri := ReleaseInstall(deployPlayload.Name, deployPlayload.Namespace, chartPath, SetValues)
 	if erri != nil {
@@ -110,8 +110,8 @@ func DeployHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// delete created secret
-	time.Sleep(1 * time.Second)
-	DeleteSecret("keycloak-setup", deployPlayload.Namespace)
+	// time.Sleep(2 * time.Second)
+	// DeleteSecret("keycloak-setup", deployPlayload.Namespace)
 
 	// helm ls
 	res, err := ListStatus(deployPlayload.Namespace)

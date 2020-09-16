@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/ghodss/yaml"
+	"gopkg.in/square/go-jose.v2/json"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"k8s.io/helm/pkg/strvals"
@@ -83,10 +86,20 @@ func ReleaseUninstall(name, namespace string) (err error) {
 
 func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 	vals := map[string]interface{}{}
-
-	err := yaml.Unmarshal([]byte(options.Values), &vals)
+	//
+	yamlFile, err := ioutil.ReadFile("values.yaml")
 	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+	}
+	val1, err1 := yaml.YAMLToJSON(yamlFile)
+
+	// err := yaml.Unmarshal([]byte(options.Values), &vals)
+	if err1 != nil {
 		return vals, fmt.Errorf("failed parsing values")
+	}
+	err2 := json.Unmarshal(val1, &vals)
+	if err2 != nil {
+		return vals, fmt.Errorf("a failed parsing values")
 	}
 	for _, value := range options.SetValues {
 		if err := strvals.ParseInto(value, vals); err != nil {
@@ -98,5 +111,20 @@ func mergeValues(options releaseOptions) (map[string]interface{}, error) {
 			return vals, fmt.Errorf("failed parsing set_string data")
 		}
 	}
+
+	spew.Dump(vals)
 	return vals, nil
+}
+
+func convert(m map[interface{}]interface{}) map[string]interface{} {
+	res := map[string]interface{}{}
+	for k, v := range m {
+		switch v2 := v.(type) {
+		case map[interface{}]interface{}:
+			res[fmt.Sprint(k)] = convert(v2)
+		default:
+			res[fmt.Sprint(k)] = v
+		}
+	}
+	return res
 }
