@@ -41,9 +41,11 @@ func CreateKeycloakSecret(name, namespace, username, password string, realm []by
 func DeleteSecret(name, namespace string) (err error) {
 
 	deploySecret := Clientset.CoreV1().Secrets(namespace)
-
+	deploySecret.Update
+	metav1.GetOptions
 	deletePolicy := metav1.DeletePropagationForeground
-	if err := deploySecret.Delete(context.TODO(), name, metav1.DeleteOptions{
+
+	if err := deploySecret.(context.TODO(), name, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}); err != nil {
 		return err
