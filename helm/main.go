@@ -28,6 +28,7 @@ func main() {
 	r.HandleFunc("/deploy", DeployHandler).Methods("POST")
 	r.HandleFunc("/deploy", DeployUninstallHandler).Methods("DELETE")
 	r.HandleFunc("/status", StatusHandler).Methods("GET")
+	r.HandleFunc("/svc", SvcHandler).Methods("GET")
 	r.HandleFunc("/list", ListHandler).Methods("GET")
 	log.Println("server running on port 8899")
 	log.Fatal(http.ListenAndServe(":8899", r))

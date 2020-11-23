@@ -55,17 +55,17 @@ type SvcStatus struct {
 	Type string `json:"type"`
 }
 
-// StatusHandler ..
-// func StatusHandler(w http.ResponseWriter, r *http.Request) {
-// 	res, err := SvcStatus("default")
-// 	if err != nil {
-// 		log.Printf(err.Error())
-// 	}
-// 	json.NewEncoder(w).Encode(res)
-// }
+// SvcHandler ..
+func SvcHandler(w http.ResponseWriter, r *http.Request) {
+	res, err := SvcsStatus("default")
+	if err != nil {
+		log.Printf(err.Error())
+	}
+	json.NewEncoder(w).Encode(res)
+}
 
-// ServiceStatus ...
-func ServiceStatus(namespace string) (p []SvcStatus, err error) {
+// SvcsStatus ...
+func SvcsStatus(namespace string) (p []SvcStatus, err error) {
 	svcs, err := Clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		log.Printf(err.Error())
